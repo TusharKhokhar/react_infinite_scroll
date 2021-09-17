@@ -1,39 +1,55 @@
 import './App.css';
 
-import React, { useState } from 'react'
-import NavBar from './components/NavBar';
-import News from './components/News';
-import {BrowserRouter as Router, Switch, Route} from "react-router-dom";
-import LoadingBar from 'react-top-loading-bar'
+import React, { useEffect, useState } from 'react'
 
-const App = ()=> {
-  const pageSize = 5;
-  const apiKey = process.env.REACT_APP_NEWS_API
-  const [progress, setProgress] = useState(0)
- 
-    return (
-      <div>
-        <Router>
-        <NavBar/> 
-        <LoadingBar
-        height={3}
-        color='#f11946'
-        progress={progress} 
-      />
-        <Switch>
-          <Route exact path="/"><News setProgress={setProgress} apiKey={apiKey} key="general" pageSize={pageSize} country="in" category="general"/></Route> 
-          <Route exact path="/business"><News setProgress={setProgress} apiKey={apiKey} key="business" pageSize={pageSize} country="in" category="business"/></Route> 
-          <Route exact path="/entertainment"><News setProgress={setProgress} apiKey={apiKey} key="entertainment" pageSize={pageSize} country="in" category="entertainment"/></Route> 
-          <Route exact path="/general"><News setProgress={setProgress} apiKey={apiKey} key="general" pageSize={pageSize} country="in" category="general"/></Route> 
-          <Route exact path="/health"><News setProgress={setProgress} apiKey={apiKey} key="health" pageSize={pageSize} country="in" category="health"/></Route> 
-          <Route exact path="/science"><News setProgress={setProgress} apiKey={apiKey} key="science" pageSize={pageSize} country="in" category="science"/></Route> 
-          <Route exact path="/sports"><News setProgress={setProgress} apiKey={apiKey} key="sports" pageSize={pageSize} country="in" category="sports"/></Route> 
-          <Route exact path="/technology"><News setProgress={setProgress} apiKey={apiKey} key="technology" pageSize={pageSize} country="in" category="technology"/></Route> 
-        </Switch>
-        </Router>
+import { getData } from './Api';
+import Airline from './Airline';
+import InfiniteScroll from 'react-infinite-scroll-component';
+
+const totalPages = 5 // we can get total number of  pages from api
+
+const App = () => {
+
+  const [airlineData, setairlineData] = useState([])
+  const [page, setpage] = useState(1)
+
+  const fetchData = async () => {
+    const res = await getData(page)
+    const array = []
+    if (res.status == 200) {
+      res.data.data.map((item) => {
+        array.push(item)
+      })
+      setairlineData([...airlineData, ...array])
+      setpage(page + 1)
+    }
+  }
+  
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+
+  return (
+    <div className="container my-5">
+      <InfiniteScroll
+        dataLength={airlineData.length}
+        next={fetchData}
+        hasMore={page != totalPages} 
+        style={{ overflowX: 'hidden' }}
+        loader={<h4>Loading...</h4>}
+      >
+
+      <div className="row d-flex justify-content-between">
+        {airlineData.map(({ airline }) => {
+          return <Airline airline={airline} />
+        })}
       </div>
-    )
- 
+      </InfiniteScroll>
+    </div>
+
+  )
+
 }
 
 export default App;
